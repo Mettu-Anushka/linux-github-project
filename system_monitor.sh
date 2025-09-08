@@ -1,47 +1,24 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
 
+# File to save logs
+LOGFILE="system_report.log"
 
-# ----------------------------
-# Linux System Monitoring Script
-# Author: <Your Name>
-# ----------------------------
-# What it does:
-# 1) Appends a timestamped report to system_report.log
-# 2) Captures Disk, Memory, CPU Load, and Top 5 CPU-hungry processes
+# Collect data
+DATE=$(date)
+CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+MEM=$(free -m | awk 'NR==2{printf "%.2f%%", $3*100/$2 }')
+DISK=$(df -h | awk '$NF=="/"{printf "%s", $5}')
 
+# Output message
+REPORT="==== System Report ====
+Date: $DATE
+CPU Usage: $CPU%
+Memory Usage: $MEM
+Disk Usage: $DISK
+=========================="
 
-LOG_FILE="system_report.log"
+# Print to screen
+echo "$REPORT"
 
-
-{
-echo "=============================="
-echo " System Report - $(date '+%Y-%m-%d %H:%M:%S %Z')"
-echo "=============================="
-
-
-echo -e "\nOS & Kernel:"
-uname -a || true
-
-
-echo -e "\nDisk Usage:"
-df -h
-
-
-echo -e "\nMemory Usage:"
-free -h
-
-
-echo -e "\nCPU Load (1/5/15 min):"
-uptime
-
-
-echo -e "\nTop 5 Processes by CPU (%):"
-# Print header + top 5 entries
-ps -eo pid,comm,%cpu,%mem --sort=-%cpu | awk 'NR==1 || NR<=6'
-
-
-} >> "$LOG_FILE"
-
-
-echo "Report appended to $LOG_FILE" 
+# Append to log file
+echo "$REPORT" >> "$LOGFILE"
